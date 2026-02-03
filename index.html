@@ -4,79 +4,32 @@
 <meta charset="UTF-8">
 <title>Project 1 – Grocery Order</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 body { font-family: Arial, sans-serif; padding: 15px; background:#f9f9f9; }
 h1,h2 { background:#2e7d32; color:white; padding:8px; border-radius:5px; }
-.item { background:white; padding:8px; margin:5px 0; border-radius:5px; }
+.item { background:white; padding:8px; margin:5px 0; border-radius:5px; display:flex; justify-content:space-between; align-items:center; }
 button { padding:6px 10px; margin-top:5px; cursor:pointer; }
 select,input,textarea { width:100%; padding:6px; margin-top:4px; }
 table { width:100%; border-collapse:collapse; margin-top:10px; background:white; }
 th,td { border:1px solid #ccc; padding:6px; text-align:center; }
-.lang-btn { background:#1565c0; color:white; border:none; margin-bottom:10px; }
-.remove { background:red; color:white; border:none; }
+.lang-btn { background:#1565c0; color:white; border:none; margin-bottom:10px; cursor:pointer; }
+.remove { background:red; color:white; border:none; padding:4px 8px; cursor:pointer; }
+.category-header { margin-top:20px; }
 </style>
 </head>
-
 <body>
 
 <button class="lang-btn" onclick="toggleLang()">🌐 മലയാളം / English</button>
-
 <h1 id="title">🛒 Grocery Order</h1>
 
-<!-- VEGETABLES -->
-<h2 id="vegTitle">🥦 Vegetables (Max 5kg)</h2>
-<div class="item">
-<span class="ml">തക്കാളി</span><span class="en">Tomato</span>
-<select id="tomato">
-<option value="1">1 kg</option><option value="2">2 kg</option>
-<option value="3">3 kg</option><option value="4">4 kg</option>
-<option value="5">5 kg</option>
-</select>
-<button onclick="addItem('Tomato','തക്കാളി','kg',tomato.value)">Add</button>
-</div>
+<div id="categories"></div>
 
-<div class="item">
-<span class="ml">ഉള്ളി</span><span class="en">Onion</span>
-<select id="onion">
-<option value="1">1 kg</option><option value="2">2 kg</option>
-<option value="3">3 kg</option><option value="4">4 kg</option>
-<option value="5">5 kg</option>
-</select>
-<button onclick="addItem('Onion','ഉള്ളി','kg',onion.value)">Add</button>
-</div>
-
-<!-- FRUITS -->
-<h2 id="fruitTitle">🍎 Fruits (Max 5kg)</h2>
-<div class="item">
-<span class="ml">ആപ്പിൾ</span><span class="en">Apple</span>
-<select id="apple">
-<option value="1">1 kg</option><option value="2">2 kg</option>
-<option value="3">3 kg</option><option value="4">4 kg</option>
-<option value="5">5 kg</option>
-</select>
-<button onclick="addItem('Apple','ആപ്പിൾ','kg',apple.value)">Add</button>
-</div>
-
-<!-- BAKERY -->
-<h2 id="bakeryTitle">🥐 Bakery (Max 10 pcs)</h2>
-<div class="item">
-<span class="ml">ബ്രെഡ്</span><span class="en">Bread</span>
-<select id="bread">
-<option value="1">1</option><option value="2">2</option>
-<option value="5">5</option><option value="10">10</option>
-</select>
-<button onclick="addItem('Bread','ബ്രെഡ്','pcs',bread.value)">Add</button>
-</div>
-
-<!-- OTHER ITEM -->
 <h2 id="otherTitle">➕ Other Items / മറ്റ് സാധനങ്ങൾ</h2>
 <input id="otherName" placeholder="Item Name / സാധനം">
 <input id="otherUnit" placeholder="Unit (kg / pcs)">
 <input id="otherQty" type="number" placeholder="Quantity">
 <button onclick="addOther()">Add Other Item</button>
 
-<!-- CART -->
 <h2 id="cartTitle">🛒 Cart</h2>
 <table id="cartTable">
 <tr>
@@ -84,78 +37,122 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 </tr>
 </table>
 
-<!-- CUSTOMER -->
 <h2 id="custTitle">👤 Customer Details</h2>
 <input id="cname" placeholder="Name / പേര്">
 <input id="cphone" placeholder="Phone / ഫോൺ">
 <textarea id="caddress" placeholder="Address / വിലാസം"></textarea>
 
-<!-- SHOP -->
 <h2 id="shopTitle">🏪 Shop Name</h2>
 <input id="shopname" placeholder="Shop name to purchase">
 
-<br>
+<br><br>
 <button onclick="placeOrder()">📲 Place Order on WhatsApp</button>
 
 <script>
+// Language toggle
 let lang="en";
-let cart=[];
-
 function toggleLang(){
  lang = (lang==="en")?"ml":"en";
  document.querySelectorAll(".ml").forEach(e=>e.style.display=(lang==="ml")?"inline":"none");
  document.querySelectorAll(".en").forEach(e=>e.style.display=(lang==="en")?"inline":"none");
 }
-
 toggleLang();
 
-function addItem(en,ml,unit,qty){
- qty=parseInt(qty);
- let name = (lang==="ml")?ml:en;
- let item=cart.find(i=>i.name===name);
- if(item) item.qty+=qty;
- else cart.push({name,unit,qty});
- renderCart();
+// Cart
+let cart=[];
+
+// Categories and items (50 items per category)
+const categories = [
+  {name:"Vegetables / പച്ചക്കറികൾ", unit:"kg", items:Array.from({length:50},(_,i)=>`Veg Item ${i+1} / പച്ചക്കറി ${i+1}`)},
+  {name:"Fruits / പഴങ്ങൾ", unit:"kg", items:Array.from({length:50},(_,i)=>`Fruit Item ${i+1} / പഴം ${i+1}`)},
+  {name:"Grocery / കിച്ചൺ സാധനങ്ങൾ", unit:"pcs", items:Array.from({length:50},(_,i)=>`Grocery Item ${i+1} / സാധനം ${i+1}`)},
+  {name:"Bakery / ബേക്കറി", unit:"pcs", items:Array.from({length:50},(_,i)=>`Bakery Item ${i+1} / ബേക്കറി ${i+1}`)},
+  {name:"Meat / മാംസം", unit:"kg", items:Array.from({length:50},(_,i)=>`Meat Item ${i+1} / മാംസം ${i+1}`)},
+  {name:"Fish / മീൻ", unit:"kg", items:Array.from({length:50},(_,i)=>`Fish Item ${i+1} / മീൻ ${i+1}`)}
+];
+
+// Render categories dynamically
+function renderCategories(){
+  const container = document.getElementById("categories");
+  container.innerHTML="";
+  categories.forEach((cat,catIdx)=>{
+    let h2 = document.createElement("h2");
+    h2.className="category-header";
+    h2.textContent = cat.name;
+    container.appendChild(h2);
+    cat.items.forEach((item,itemIdx)=>{
+      let div = document.createElement("div");
+      div.className="item";
+      let [en,ml] = item.split(" / ");
+      div.innerHTML=`
+        <span><span class="ml">${ml}</span><span class="en">${en}</span></span>
+        <select id="qty-${catIdx}-${itemIdx}">`+
+        Array.from({length:10},(_,i)=>`<option value="${i+1}">${i+1} ${cat.unit}</option>`).join('')+
+        `</select>
+        <button onclick="addItem(${catIdx},${itemIdx})">Add</button>
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+renderCategories();
+
+// Add item to cart
+function addItem(catIdx,itemIdx){
+  let cat = categories[catIdx];
+  let item = cat.items[itemIdx];
+  let qty = parseInt(document.getElementById(`qty-${catIdx}-${itemIdx}`).value);
+  cart.push({name:item,unit:cat.unit,qty:qty});
+  renderCart();
 }
 
+// Add other item
 function addOther(){
- let name=otherName.value;
- let unit=otherUnit.value;
- let qty=parseInt(otherQty.value);
- if(!name||!unit||!qty){ alert("Fill all fields"); return; }
- cart.push({name,unit,qty});
- otherName.value=otherUnit.value=otherQty.value="";
- renderCart();
+  let name = document.getElementById("otherName").value;
+  let unit = document.getElementById("otherUnit").value;
+  let qty = parseInt(document.getElementById("otherQty").value);
+  if(!name || !unit || !qty){ alert("Please fill all fields"); return; }
+  cart.push({name:name,unit:unit,qty:qty});
+  renderCart();
 }
 
+// Render cart
 function renderCart(){
- let t=document.getElementById("cartTable");
- t.innerHTML="<tr><th>Item</th><th>Unit</th><th>Qty</th><th>Remove</th></tr>";
- cart.forEach((i,idx)=>{
-  t.innerHTML+=`<tr>
-  <td>${i.name}</td><td>${i.unit}</td><td>${i.qty}</td>
-  <td><button class="remove" onclick="removeItem(${idx})">X</button></td>
-  </tr>`;
- });
+  let table = document.getElementById("cartTable");
+  table.innerHTML=`<tr><th>Item</th><th>Unit</th><th>Qty</th><th>Remove</th></tr>`;
+  cart.forEach((c,i)=>{
+    let row = table.insertRow();
+    row.insertCell(0).innerHTML=c.name;
+    row.insertCell(1).innerHTML=c.unit;
+    row.insertCell(2).innerHTML=c.qty;
+    let removeBtn = document.createElement("button");
+    removeBtn.className="remove";
+    removeBtn.textContent="Remove";
+    removeBtn.onclick=()=>{cart.splice(i,1); renderCart();}
+    row.insertCell(3).appendChild(removeBtn);
+  });
 }
 
-function removeItem(i){ cart.splice(i,1); renderCart(); }
-
+// Place order
 function placeOrder(){
- let msg="*🛒 GROCERY ORDER*%0A%0A";
- msg+="Name: "+cname.value+"%0A";
- msg+="Phone: "+cphone.value+"%0A";
- msg+="Address: "+caddress.value+"%0A";
- msg+="Shop: "+shopname.value+"%0A%0A";
- msg+="-------------------------%0A";
- msg+="Item | Unit | Qty%0A";
- msg+="-------------------------%0A";
- cart.forEach(i=>{ msg+=`${i.name} | ${i.unit} | ${i.qty}%0A`; });
- msg+="-------------------------%0A";
- msg+="Payment: Cash on Delivery";
- window.open("https://wa.me/91XXXXXXXXXX?text="+msg);
+  if(cart.length===0){ alert("Cart is empty"); return; }
+  let cname = document.getElementById("cname").value;
+  let cphone = document.getElementById("cphone").value;
+  let caddress = document.getElementById("caddress").value;
+  let shopname = document.getElementById("shopname").value;
+  if(!cname || !cphone || !caddress || !shopname){ alert("Please fill all customer details"); return; }
+
+  let message=`*Order Details*\nCustomer: ${cname}\nPhone: ${cphone}\nAddress: ${caddress}\nShop: ${shopname}\n\n`;
+  message+="Item | Unit | Qty\n";
+  cart.forEach(c=>{
+    message+=`${c.name} | ${c.unit} | ${c.qty}\n`;
+  });
+
+  // WhatsApp fixed number
+  let phoneNumber = "917878787878"; // +91 7878787878
+  let url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  window.open(url,"_blank");
 }
 </script>
-
 </body>
 </html>
